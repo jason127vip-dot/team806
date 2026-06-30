@@ -119,7 +119,7 @@ function AuthPage({ onAuthenticated }) {
                 name="email"
                 type="email"
                 value={form.email}
-                onChange={updateField}
+                onChange={updateField} 
                 autoComplete="email"
               />
             </label>
