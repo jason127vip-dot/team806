@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 async function apiRequest(path, options = {}, token = null) {
   const headers = {
@@ -152,6 +152,8 @@ function AuthPage({ onAuthenticated }) {
 function HomePage({ session, onLogout }) {
   const [tasks, setTasks] = useState([]);
   const [form, setForm] = useState({ title: "", description: "", status: "todo" });
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", status: "todo" });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -215,6 +217,39 @@ function HomePage({ session, onLogout }) {
         session.token,
       );
       setTasks((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  function startEditing(task) {
+    setEditingTaskId(task.id);
+    setEditForm({
+      title: task.title,
+      description: task.description || "",
+      status: task.status,
+    });
+  }
+
+  function cancelEditing() {
+    setEditingTaskId(null);
+    setEditForm({ title: "", description: "", status: "todo" });
+  }
+
+  async function saveTask(event, taskId) {
+    event.preventDefault();
+    setError("");
+    try {
+      const updated = await apiRequest(
+        `/tasks/${taskId}/`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(editForm),
+        },
+        session.token,
+      );
+      setTasks((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+      cancelEditing();
     } catch (err) {
       setError(err.message);
     }
@@ -316,24 +351,75 @@ function HomePage({ session, onLogout }) {
           <div className="task-stack">
             {tasks.map((task) => (
               <article className="task-card" key={task.id}>
-                <div>
-                  <h3>{task.title}</h3>
-                  {task.description && <p>{task.description}</p>}
-                </div>
-                <div className="task-actions">
-                  <select
-                    value={task.status}
-                    onChange={(event) => updateTaskStatus(task, event.target.value)}
-                    aria-label={`Status for ${task.title}`}
-                  >
-                    <option value="todo">To Do</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                  <button type="button" onClick={() => removeTask(task.id)}>
-                    Delete
-                  </button>
-                </div>
+                {editingTaskId === task.id ? (
+                  <form className="edit-task-form" onSubmit={(event) => saveTask(event, task.id)}>
+                    <label>
+                      Title
+                      <input
+                        value={editForm.title}
+                        onChange={(event) =>
+                          setEditForm({ ...editForm, title: event.target.value })
+                        }
+                        required
+                      />
+                    </label>
+                    <label>
+                      Description
+                      <textarea
+                        value={editForm.description}
+                        onChange={(event) =>
+                          setEditForm({ ...editForm, description: event.target.value })
+                        }
+                        rows="3"
+                      />
+                    </label>
+                    <label>
+                      Status
+                      <select
+                        value={editForm.status}
+                        onChange={(event) =>
+                          setEditForm({ ...editForm, status: event.target.value })
+                        }
+                      >
+                        <option value="todo">To Do</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </label>
+                    <div className="task-actions">
+                      <button className="primary-action" type="submit">
+                        Save
+                      </button>
+                      <button type="button" onClick={cancelEditing}>
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div>
+                      <h3>{task.title}</h3>
+                      {task.description && <p>{task.description}</p>}
+                    </div>
+                    <div className="task-actions">
+                      <select
+                        value={task.status}
+                        onChange={(event) => updateTaskStatus(task, event.target.value)}
+                        aria-label={`Status for ${task.title}`}
+                      >
+                        <option value="todo">To Do</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                      <button type="button" onClick={() => startEditing(task)}>
+                        Edit
+                      </button>
+                      <button type="button" onClick={() => removeTask(task.id)}>
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                )}
               </article>
             ))}
           </div>

@@ -289,6 +289,12 @@ textarea:focus {
   margin-bottom: 6px;
 }
 
+.edit-task-form {
+  display: grid;
+  gap: 14px;
+  grid-column: 1 / -1;
+}
+
 .task-actions {
   align-items: center;
   display: flex;
