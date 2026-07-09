@@ -1,45 +1,36 @@
 # Docker Compose lets us run the backend and frontend together with one command.
-# Docker Compose 可以用一个命令同时启动后端和前端。
 
 services:
   backend:
     # Build the backend image from backend/Dockerfile.
-    # 使用 backend/Dockerfile 构建 Django 后端镜像。
     build:
       context: ./backend
       dockerfile: Dockerfile
 
     # Give the container a clear name in Docker Desktop.
-    # 给后端容器设置一个清楚的名字，方便在 Docker Desktop 里查看。
     container_name: team806-backend
 
     # Load backend environment variables from backend/.env.
-    # 从 backend/.env 读取后端环境变量，例如 SECRET_KEY、DEBUG、CORS 配置。
     env_file:
       - ./backend/.env
 
     # Map host port 8000 to container port 8000.
-    # 把电脑本机的 8000 端口映射到容器内部的 8000 端口。
     ports:
       - "8000:8000"
 
   frontend:
     # Build the frontend image from frontend/Dockerfile.
-    # 使用 frontend/Dockerfile 构建 React 前端镜像。
     build:
       context: ./frontend
       dockerfile: Dockerfile
 
     # Give the container a clear name in Docker Desktop.
-    # 给前端容器设置一个清楚的名字，方便在 Docker Desktop 里查看。
     container_name: team806-frontend
 
     # Start the frontend after the backend service has been started.
-    # 让前端在后端服务启动之后再启动。
     depends_on:
       - backend
 
     # Map host port 4173 to container port 4173.
-    # 把电脑本机的 4173 端口映射到容器内部的 4173 端口。
     ports:
       - "4173:4173"
