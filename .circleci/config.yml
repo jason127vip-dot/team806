@@ -1,0 +1,28 @@
+version: 2.1
+
+jobs:
+  docker-build:
+    docker:
+      - image: cimg/base:stable
+
+    environment:
+      BACKEND_IMAGE: team806-backend
+      FRONTEND_IMAGE: team806-frontend
+
+    steps:
+      - checkout
+
+      - setup_remote_docker
+
+      - run:
+          name: Build Django backend image
+          command: docker build -t ${BACKEND_IMAGE}:ci ./backend
+
+      - run:
+          name: Build React frontend image
+          command: docker build -t ${FRONTEND_IMAGE}:ci ./frontend
+
+workflows:
+  docker-build-workflow:
+    jobs:
+      - docker-build
